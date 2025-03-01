@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Poker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px;
+            margin: 10px;
+        }
+        p {
+            font-size: 20px;
+        }
+        #history {
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo de Poker</h1>
+    <button onclick="drawCard()">Puxar Carta</button>
+    <button onclick="resetHand()">Resetar Mão</button>
+    <button onclick="resetSecondaryHand()">Resetar Mão Secundária</button>
+    <button onclick="resetDeck()">Resetar Baralho</button>
+    <p id="hand">Mão Primária: </p>
+    <p id="secondaryHand">Mão Secundária: </p>
+    <h2>Transferir Carta para Mão Secundária</h2>
+    <div id="primaryCards"></div>
+    <h2>Histórico de Mãos</h2>
+    <ul id="history"></ul>
+    
+    <script>
+        const suits = ['♠', '♥', '♦', '♣'];
+        const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        let deck = [];
+        let hand = [];
+        let secondaryHand = [];
+        let usedCards = [];
+        let history = [];
+
+        function createDeck() {
+            deck = [];
+            for (let suit of suits) {
+                for (let value of values) {
+                    deck.push({ value, suit });
+                }
+            }
+            deck.sort(() => Math.random() - 0.5);
+            usedCards = [];
+        }
+
+        function drawCard() {
+            if (hand.length < 5 && deck.length > 0) {
+                let card = deck.pop();
+                hand.push(card);
+                usedCards.push(card);
+                displayHands();
+                if (hand.length === 5) {
+                    let handResult = `Mão Primária: ${handToString(hand)} - ${evaluateHand(hand)}`;
+                    history.unshift(handResult); // Adiciona a mão no topo do histórico
+                    updateHistory();
+                    setTimeout(() => alert(handResult), 200);
+                }
+            }
+        }
+
+        function transferToSecondary(index) {
+            if (secondaryHand.length < 5) {
+                let card = hand.splice(index, 1)[0];
+                secondaryHand.push(card);
+                displayHands();
+            }
+        }
+
+        function resetHand() {
+            hand = [];
+            displayHands();
+        }
+
+        function resetSecondaryHand() {
+            secondaryHand = [];
+            displayHands();
+        }
+
+        function resetDeck() {
+            createDeck();
+            hand = [];
+            secondaryHand = [];
+            displayHands();
+        }
+
+        function displayHands() {
+            document.getElementById("hand").innerText = "Mão Primária: " + handToString(hand);
+            document.getElementById("secondaryHand").innerText = "Mão Secundária: " + handToString(secondaryHand);
+            
+            let primaryCardsDiv = document.getElementById("primaryCards");
+            primaryCardsDiv.innerHTML = "";
+            hand.forEach((card, index) => {
+                let btn = document.createElement("button");
+                btn.innerText = `${card.value}${card.suit}`;
+                btn.onclick = () => transferToSecondary(index);
+                primaryCardsDiv.appendChild(btn);
+            });
+        }
+
+        function updateHistory() {
+            let historyList = document.getElementById("history");
+            historyList.innerHTML = "";
+            history.forEach(entry => {
+                let li = document.createElement("li");
+                li.textContent = entry;
+                historyList.appendChild(li);
+            });
+        }
+
+        function handToString(handArray) {
+            return handArray.length ? handArray.map(card => `${card.value}${card.suit}`).join(', ') : "";
+        }
+
+        function evaluateHand(handArray) {
+            let valueCounts = {};
+            let valuesSorted = handArray.map(card => values.indexOf(card.value)).sort((a, b) => a - b);
+            let isFlush = new Set(handArray.map(card => card.suit)).size === 1;
+            let isStraight = valuesSorted.every((v, i, arr) => i === 0 || v === arr[i - 1] + 1);
+            
+            handArray.forEach(({ value }) => valueCounts[value] = (valueCounts[value] || 0) + 1);
+            let pairs = Object.values(valueCounts).filter(v => v === 2).length;
+            let three = Object.values(valueCounts).includes(3);
+            let four = Object.values(valueCounts).includes(4);
+            
+            if (isStraight && isFlush) return "Straight Flush!";
+            if (four) return "Four of a Kind!";
+            if (three && pairs) return "Full House!";
+            if (isFlush) return "Flush!";
+            if (isStraight) return "Straight!";
+            if (three) return "Three of a Kind!";
+            if (pairs === 2) return "Two Pair!";
+            if (pairs === 1) return "One Pair!";
+            return "High Card!";
+        }
+
+        createDeck();
+    </script>
+</body>
+</html>
