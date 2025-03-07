@@ -30,11 +30,17 @@
     <button onclick="drawCard()">Puxar Carta</button>
     <button onclick="resetHand()">Resetar Mão</button>
     <button onclick="resetSecondaryHand()">Resetar Mão Secundária</button>
+    <button onclick="resetTertiaryHand()">Resetar Mão Terciária</button>
     <button onclick="resetDeck()">Resetar Baralho</button>
     <p id="hand">Mão Primária: </p>
     <p id="secondaryHand">Mão Secundária: </p>
+    <p id="tertiaryHand">Mão Terciária: </p>
     <h2>Transferir Carta para Mão Secundária</h2>
     <div id="primaryCards"></div>
+    <h2>Transferir Carta para Mão Primária</h2>
+    <div id="secondaryCards"></div>
+    <h2>Transferir Carta para Mão Secundária</h2>
+    <div id="tertiaryCards"></div>
     <h2>Histórico de Mãos</h2>
     <ul id="history"></ul>
     
@@ -44,6 +50,7 @@
         let deck = [];
         let hand = [];
         let secondaryHand = [];
+        let tertiaryHand = [];
         let usedCards = [];
         let history = [];
 
@@ -81,6 +88,41 @@
             }
         }
 
+        function transferToTertiary(index) {
+            if (tertiaryHand.length < 5) {
+                let card = hand.splice(index, 1)[0];
+                tertiaryHand.push(card);
+                displayHands();
+            }
+        }
+
+        function transferToPrimary(index, handType) {
+            let card;
+            if (handType === 'secondary') {
+                card = secondaryHand.splice(index, 1)[0];
+                hand.push(card);
+            } else if (handType === 'tertiary') {
+                card = tertiaryHand.splice(index, 1)[0];
+                hand.push(card);
+            }
+            displayHands();
+        }
+
+        function deleteCardFromPrimary(index) {
+            hand.splice(index, 1);
+            displayHands();
+        }
+
+        function deleteCardFromSecondary(index) {
+            secondaryHand.splice(index, 1);
+            displayHands();
+        }
+
+        function deleteCardFromTertiary(index) {
+            tertiaryHand.splice(index, 1);
+            displayHands();
+        }
+
         function resetHand() {
             hand = [];
             displayHands();
@@ -91,16 +133,23 @@
             displayHands();
         }
 
+        function resetTertiaryHand() {
+            tertiaryHand = [];
+            displayHands();
+        }
+
         function resetDeck() {
             createDeck();
             hand = [];
             secondaryHand = [];
+            tertiaryHand = [];
             displayHands();
         }
 
         function displayHands() {
             document.getElementById("hand").innerText = "Mão Primária: " + handToString(hand);
             document.getElementById("secondaryHand").innerText = "Mão Secundária: " + handToString(secondaryHand);
+            document.getElementById("tertiaryHand").innerText = "Mão Terciária: " + handToString(tertiaryHand);
             
             let primaryCardsDiv = document.getElementById("primaryCards");
             primaryCardsDiv.innerHTML = "";
@@ -109,6 +158,44 @@
                 btn.innerText = `${card.value}${card.suit}`;
                 btn.onclick = () => transferToSecondary(index);
                 primaryCardsDiv.appendChild(btn);
+                
+                let btnTertiary = document.createElement("button");
+                btnTertiary.innerText = "Mover para Terciária";
+                btnTertiary.onclick = () => transferToTertiary(index);
+                primaryCardsDiv.appendChild(btnTertiary);
+
+                let deleteBtn = document.createElement("button");
+                deleteBtn.innerText = "Excluir";
+                deleteBtn.onclick = () => deleteCardFromPrimary(index);
+                primaryCardsDiv.appendChild(deleteBtn);
+            });
+
+            let secondaryCardsDiv = document.getElementById("secondaryCards");
+            secondaryCardsDiv.innerHTML = "";
+            secondaryHand.forEach((card, index) => {
+                let btn = document.createElement("button");
+                btn.innerText = `${card.value}${card.suit}`;
+                btn.onclick = () => transferToPrimary(index, 'secondary');
+                secondaryCardsDiv.appendChild(btn);
+                
+                let deleteBtn = document.createElement("button");
+                deleteBtn.innerText = "Excluir";
+                deleteBtn.onclick = () => deleteCardFromSecondary(index);
+                secondaryCardsDiv.appendChild(deleteBtn);
+            });
+
+            let tertiaryCardsDiv = document.getElementById("tertiaryCards");
+            tertiaryCardsDiv.innerHTML = "";
+            tertiaryHand.forEach((card, index) => {
+                let btn = document.createElement("button");
+                btn.innerText = `${card.value}${card.suit}`;
+                btn.onclick = () => transferToPrimary(index, 'tertiary');
+                tertiaryCardsDiv.appendChild(btn);
+                
+                let deleteBtn = document.createElement("button");
+                deleteBtn.innerText = "Excluir";
+                deleteBtn.onclick = () => deleteCardFromTertiary(index);
+                tertiaryCardsDiv.appendChild(deleteBtn);
             });
         }
 
