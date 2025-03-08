@@ -8,43 +8,56 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            margin-top: 50px;
+            background-color: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 20px;
         }
         button {
             font-size: 16px;
             padding: 10px;
-            margin: 10px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: transform 0.2s;
         }
-        p {
-            font-size: 20px;
+        button:hover {
+            transform: scale(1.1);
         }
-        #history {
+        .card-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
             margin-top: 20px;
-            text-align: left;
+        }
+        .card {
             display: inline-block;
+            padding: 10px;
+            background: #ff0000;
+            color: black;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
         }
     </style>
 </head>
 <body>
     <h1>Jogo de Poker</h1>
     <button onclick="drawCard()">Puxar Carta</button>
-    <button onclick="resetHand()">Resetar Mão</button>
-    <button onclick="resetSecondaryHand()">Resetar Mão Secundária</button>
-    <button onclick="resetTertiaryHand()">Resetar Mão Terciária</button>
-    <button onclick="resetQuaternaryHand()">Resetar Mão Quaternária</button>
-    <button onclick="resetDeck()">Resetar Baralho</button>
-    <p id="hand">Mão Primária: </p>
-    <p id="secondaryHand">Mão Secundária: </p>
-    <p id="tertiaryHand">Mão Terciária: </p>
-    <p id="quaternaryHand">Mão Quaternária: </p>
-    <h2>Transferir Carta para Mão Secundária</h2>
-    <div id="primaryCards"></div>
-    <h2>Transferir Carta para Mão Primária</h2>
-    <div id="secondaryCards"></div>
-    <h2>Transferir Carta para Mão Secundária</h2>
-    <div id="tertiaryCards"></div>
-    <h2>Transferir Carta para Mão Quaternária</h2>
-    <div id="quaternaryCards"></div>
+    <button onclick="resetGame()">Resetar Jogo</button>
+    <h2>Mão Primária</h2>
+    <div id="primaryCards" class="card-container"></div>
+    <h2>Mão Secundária</h2>
+    <div id="secondaryCards" class="card-container"></div>
+    <h2>Inimigo 1</h2>
+    <div id="tertiaryCards" class="card-container"></div>
+    <h2>Inimigo 2</h2>
+    <div id="quaternaryCards" class="card-container"></div>
     <h2>Histórico de Mãos</h2>
     <ul id="history"></ul>
     
@@ -52,11 +65,12 @@
         const suits = ['♠', '♥', '♦', '♣'];
         const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
         let deck = [];
-        let hand = [];
-        let secondaryHand = [];
-        let tertiaryHand = [];
-        let quaternaryHand = [];
-        let usedCards = [];
+        let hands = {
+            primary: [],
+            secondary: [],
+            tertiary: [],
+            quaternary: []
+        };
         let history = [];
 
         function createDeck() {
@@ -67,219 +81,44 @@
                 }
             }
             deck.sort(() => Math.random() - 0.5);
-            usedCards = [];
         }
 
         function drawCard() {
-            if (hand.length < 5 && deck.length > 0) {
+            if (deck.length > 0 && hands.primary.length < 5) {
                 let card = deck.pop();
-                hand.push(card);
-                usedCards.push(card);
-                displayHands();
-                if (hand.length === 5) {
-                    let handResult = `Mão Primária: ${handToString(hand)} - ${evaluateHand(hand)}`;
-                    history.unshift(handResult); // Adiciona a mão no topo do histórico
-                    updateHistory();
-                    setTimeout(() => alert(handResult), 200);
-                }
-            }
-        }
-
-        function transferToSecondary(index) {
-            if (secondaryHand.length < 5) {
-                let card = hand.splice(index, 1)[0];
-                secondaryHand.push(card);
+                hands.primary.push(card);
                 displayHands();
             }
         }
 
-        function transferToTertiary(index) {
-            if (tertiaryHand.length < 5) {
-                let card = hand.splice(index, 1)[0];
-                tertiaryHand.push(card);
+        function moveCard(from, to, index) {
+            if (hands[to].length < 5) {
+                let card = hands[from].splice(index, 1)[0];
+                hands[to].push(card);
                 displayHands();
             }
         }
 
-        function transferToQuaternary(index) {
-            if (quaternaryHand.length < 5) {
-                let card = hand.splice(index, 1)[0];
-                quaternaryHand.push(card);
-                displayHands();
-            }
-        }
-
-        function transferToPrimary(index, handType) {
-            let card;
-            if (handType === 'secondary') {
-                card = secondaryHand.splice(index, 1)[0];
-                hand.push(card);
-            } else if (handType === 'tertiary') {
-                card = tertiaryHand.splice(index, 1)[0];
-                hand.push(card);
-            } else if (handType === 'quaternary') {
-                card = quaternaryHand.splice(index, 1)[0];
-                hand.push(card);
-            }
-            displayHands();
-        }
-
-        function deleteCardFromPrimary(index) {
-            hand.splice(index, 1);
-            displayHands();
-        }
-
-        function deleteCardFromSecondary(index) {
-            secondaryHand.splice(index, 1);
-            displayHands();
-        }
-
-        function deleteCardFromTertiary(index) {
-            tertiaryHand.splice(index, 1);
-            displayHands();
-        }
-
-        function deleteCardFromQuaternary(index) {
-            quaternaryHand.splice(index, 1);
-            displayHands();
-        }
-
-        function resetHand() {
-            hand = [];
-            displayHands();
-        }
-
-        function resetSecondaryHand() {
-            secondaryHand = [];
-            displayHands();
-        }
-
-        function resetTertiaryHand() {
-            tertiaryHand = [];
-            displayHands();
-        }
-
-        function resetQuaternaryHand() {
-            quaternaryHand = [];
-            displayHands();
-        }
-
-        function resetDeck() {
+        function resetGame() {
             createDeck();
-            hand = [];
-            secondaryHand = [];
-            tertiaryHand = [];
-            quaternaryHand = [];
+            hands = { primary: [], secondary: [], tertiary: [], quaternary: [] };
+            history = [];
             displayHands();
+            document.getElementById("history").innerHTML = "";
         }
 
         function displayHands() {
-            document.getElementById("hand").innerText = "Mão Primária: " + handToString(hand);
-            document.getElementById("secondaryHand").innerText = "Mão Secundária: " + handToString(secondaryHand);
-            document.getElementById("tertiaryHand").innerText = "Mão Terciária: " + handToString(tertiaryHand);
-            document.getElementById("quaternaryHand").innerText = "Mão Quaternária: " + handToString(quaternaryHand);
-            
-            let primaryCardsDiv = document.getElementById("primaryCards");
-            primaryCardsDiv.innerHTML = "";
-            hand.forEach((card, index) => {
-                let btn = document.createElement("button");
-                btn.innerText = `${card.value}${card.suit}`;
-                btn.onclick = () => transferToSecondary(index);
-                primaryCardsDiv.appendChild(btn);
-                
-                let btnTertiary = document.createElement("button");
-                btnTertiary.innerText = "Mover para Terciária";
-                btnTertiary.onclick = () => transferToTertiary(index);
-                primaryCardsDiv.appendChild(btnTertiary);
-
-                let btnQuaternary = document.createElement("button");
-                btnQuaternary.innerText = "Mover para Quaternária";
-                btnQuaternary.onclick = () => transferToQuaternary(index);
-                primaryCardsDiv.appendChild(btnQuaternary);
-
-                let deleteBtn = document.createElement("button");
-                deleteBtn.innerText = "Excluir";
-                deleteBtn.onclick = () => deleteCardFromPrimary(index);
-                primaryCardsDiv.appendChild(deleteBtn);
-            });
-
-            let secondaryCardsDiv = document.getElementById("secondaryCards");
-            secondaryCardsDiv.innerHTML = "";
-            secondaryHand.forEach((card, index) => {
-                let btn = document.createElement("button");
-                btn.innerText = `${card.value}${card.suit}`;
-                btn.onclick = () => transferToPrimary(index, 'secondary');
-                secondaryCardsDiv.appendChild(btn);
-                
-                let deleteBtn = document.createElement("button");
-                deleteBtn.innerText = "Excluir";
-                deleteBtn.onclick = () => deleteCardFromSecondary(index);
-                secondaryCardsDiv.appendChild(deleteBtn);
-            });
-
-            let tertiaryCardsDiv = document.getElementById("tertiaryCards");
-            tertiaryCardsDiv.innerHTML = "";
-            tertiaryHand.forEach((card, index) => {
-                let btn = document.createElement("button");
-                btn.innerText = `${card.value}${card.suit}`;
-                btn.onclick = () => transferToPrimary(index, 'tertiary');
-                tertiaryCardsDiv.appendChild(btn);
-                
-                let deleteBtn = document.createElement("button");
-                deleteBtn.innerText = "Excluir";
-                deleteBtn.onclick = () => deleteCardFromTertiary(index);
-                tertiaryCardsDiv.appendChild(deleteBtn);
-            });
-
-            let quaternaryCardsDiv = document.getElementById("quaternaryCards");
-            quaternaryCardsDiv.innerHTML = "";
-            quaternaryHand.forEach((card, index) => {
-                let btn = document.createElement("button");
-                btn.innerText = `${card.value}${card.suit}`;
-                btn.onclick = () => transferToPrimary(index, 'quaternary');
-                quaternaryCardsDiv.appendChild(btn);
-                
-                let deleteBtn = document.createElement("button");
-                deleteBtn.innerText = "Excluir";
-                deleteBtn.onclick = () => deleteCardFromQuaternary(index);
-                quaternaryCardsDiv.appendChild(deleteBtn);
-            });
-        }
-
-        function updateHistory() {
-            let historyList = document.getElementById("history");
-            historyList.innerHTML = "";
-            history.forEach(entry => {
-                let li = document.createElement("li");
-                li.textContent = entry;
-                historyList.appendChild(li);
-            });
-        }
-
-        function handToString(handArray) {
-            return handArray.length ? handArray.map(card => `${card.value}${card.suit}`).join(', ') : "";
-        }
-
-        function evaluateHand(handArray) {
-            let valueCounts = {};
-            let valuesSorted = handArray.map(card => values.indexOf(card.value)).sort((a, b) => a - b);
-            let isFlush = new Set(handArray.map(card => card.suit)).size === 1;
-            let isStraight = valuesSorted.every((v, i, arr) => i === 0 || v === arr[i - 1] + 1);
-            
-            handArray.forEach(({ value }) => valueCounts[value] = (valueCounts[value] || 0) + 1);
-            let pairs = Object.values(valueCounts).filter(v => v === 2).length;
-            let three = Object.values(valueCounts).includes(3);
-            let four = Object.values(valueCounts).includes(4);
-            
-            if (isStraight && isFlush) return "Straight Flush!";
-            if (four) return "Four of a Kind!";
-            if (three && pairs) return "Full House!";
-            if (isFlush) return "Flush!";
-            if (isStraight) return "Straight!";
-            if (three) return "Three of a Kind!";
-            if (pairs === 2) return "Two Pair!";
-            if (pairs === 1) return "One Pair!";
-            return "High Card!";
+            for (let hand in hands) {
+                let container = document.getElementById(hand + "Cards");
+                container.innerHTML = "";
+                hands[hand].forEach((card, index) => {
+                    let cardElement = document.createElement("div");
+                    cardElement.className = "card";
+                    cardElement.innerText = `${card.value}${card.suit}`;
+                    cardElement.onclick = () => moveCard(hand, prompt("Mover para: primary, secondary, tertiary, quaternary"), index);
+                    container.appendChild(cardElement);
+                });
+            }
         }
 
         createDeck();
