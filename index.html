@@ -35,7 +35,7 @@
         .card {
             display: inline-block;
             padding: 10px;
-            background: #c50000;
+            background: #ffcc00;
             color: black;
             font-weight: bold;
             border-radius: 8px;
@@ -83,6 +83,9 @@
         let graveyard = [];
         let history = [];
 
+        // Carregar o som de puxar a carta
+        const cardDrawSound = new Audio('card-draw.mp3'); // Coloque o caminho do seu arquivo de som
+
         function createDeck() {
             deck = [];
             for (let suit of suits) {
@@ -98,6 +101,9 @@
                 let card = deck.pop();
                 hands.primary.push(card);
                 displayHands();
+
+                // Tocar som de puxada de carta
+                cardDrawSound.play();
             } else if (hands.primary.length >= 5) {
                 alert("Você já tem 5 cartas na mão primária.");
             }
@@ -110,14 +116,21 @@
                 return;
             }
 
-            if (hands[to].length < 5 || to === 'graveyard') {
+            // Se for mover para o cemitério, mova para o array graveyard
+            if (to === 'graveyard') {
+                let card = hands[from].splice(index, 1)[0];
+                graveyard.push(card);
+            } 
+            // Caso contrário, se o destino tem menos de 5 cartas, mova a carta
+            else if (hands[to].length < 5 || to === 'graveyard') {
                 let card = hands[from].splice(index, 1)[0];
                 hands[to].push(card);
-                displayHands();
-                checkEnemyHand(); // Verifica se algum inimigo completou 5 cartas
             } else {
                 alert("A mão de destino já tem 5 cartas.");
             }
+            
+            displayHands();
+            checkEnemyHand(); // Verifica se algum inimigo completou 5 cartas
         }
 
         function resetGame() {
