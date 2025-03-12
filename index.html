@@ -30,11 +30,12 @@
             justify-content: center;
             gap: 10px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
         .card {
             display: inline-block;
             padding: 10px;
-            background: #ff0000;
+            background: #c50000;
             color: black;
             font-weight: bold;
             border-radius: 8px;
@@ -43,6 +44,12 @@
         }
         .card:hover {
             transform: translateY(-5px);
+        }
+        @media (max-width: 600px) {
+            .card-container {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
@@ -58,6 +65,8 @@
     <div id="tertiaryCards" class="card-container"></div>
     <h2>Inimigo 2</h2>
     <div id="quaternaryCards" class="card-container"></div>
+    <h2>Cemitério</h2>
+    <div id="graveyard" class="card-container"></div>
     <h2>Histórico de Mãos</h2>
     <ul id="history"></ul>
     
@@ -71,6 +80,7 @@
             tertiary: [],
             quaternary: []
         };
+        let graveyard = [];
         let history = [];
 
         function createDeck() {
@@ -88,20 +98,32 @@
                 let card = deck.pop();
                 hands.primary.push(card);
                 displayHands();
+            } else if (hands.primary.length >= 5) {
+                alert("Você já tem 5 cartas na mão primária.");
             }
         }
 
         function moveCard(from, to, index) {
-            if (hands[to].length < 5) {
+            // Validação do destino
+            if (!['primary', 'secondary', 'tertiary', 'quaternary', 'graveyard'].includes(to)) {
+                alert("Destino inválido! Escolha entre: primary, secondary, tertiary, quaternary, graveyard.");
+                return;
+            }
+
+            if (hands[to].length < 5 || to === 'graveyard') {
                 let card = hands[from].splice(index, 1)[0];
                 hands[to].push(card);
                 displayHands();
+                checkEnemyHand(); // Verifica se algum inimigo completou 5 cartas
+            } else {
+                alert("A mão de destino já tem 5 cartas.");
             }
         }
 
         function resetGame() {
             createDeck();
             hands = { primary: [], secondary: [], tertiary: [], quaternary: [] };
+            graveyard = [];
             history = [];
             displayHands();
             document.getElementById("history").innerHTML = "";
@@ -115,10 +137,58 @@
                     let cardElement = document.createElement("div");
                     cardElement.className = "card";
                     cardElement.innerText = `${card.value}${card.suit}`;
-                    cardElement.onclick = () => moveCard(hand, prompt("Mover para: primary, secondary, tertiary, quaternary"), index);
+                    cardElement.onclick = () => {
+                        let to = prompt("Mover para: primary, secondary, tertiary, quaternary, graveyard");
+                        moveCard(hand, to, index);
+                    };
                     container.appendChild(cardElement);
                 });
             }
+
+            let graveyardContainer = document.getElementById("graveyard");
+            graveyardContainer.innerHTML = "";
+            graveyard.forEach(card => {
+                let cardElement = document.createElement("div");
+                cardElement.className = "card";
+                cardElement.innerText = `${card.value}${card.suit}`;
+                graveyardContainer.appendChild(cardElement);
+            });
+        }
+
+        // Verificar e registrar a mão do inimigo quando ele tiver 5 cartas
+        function checkEnemyHand() {
+            // Verifica se o inimigo 1 tem 5 cartas
+            if (hands.tertiary.length === 5) {
+                addToHistory(`Mão do Inimigo 1: ${formatHand(hands.tertiary)}`);
+                moveToGraveyard('tertiary');
+            }
+
+            // Verifica se o inimigo 2 tem 5 cartas
+            if (hands.quaternary.length === 5) {
+                addToHistory(`Mão do Inimigo 2: ${formatHand(hands.quaternary)}`);
+                moveToGraveyard('quaternary');
+            }
+        }
+
+        // Formatar a mão para exibir no histórico
+        function formatHand(hand) {
+            return hand.map(card => `${card.value}${card.suit}`).join(', ');
+        }
+
+        // Mover as cartas do inimigo para o cemitério
+        function moveToGraveyard(enemy) {
+            graveyard.push(...hands[enemy]);
+            hands[enemy] = [];
+            displayHands();
+        }
+
+        // Adicionar um evento no histórico, mas sem cartas puxadas ou movidas
+        function addToHistory(action) {
+            history.push(action);
+            let historyContainer = document.getElementById("history");
+            let listItem = document.createElement("li");
+            listItem.textContent = action;
+            historyContainer.appendChild(listItem);
         }
 
         createDeck();
